@@ -9,12 +9,98 @@
         android:text="设置中心" />
 
     <com.dda.mobilesafe.view.SettingItemView
+        android:id="@+id/siv_watch_dog"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        anzai:desc_off="看门狗已经关闭"
+        anzai:desc_on="看门狗已经打开"
+        anzai:titles="看门狗设置" />
+
+    <com.dda.mobilesafe.view.SettingItemView
         android:id="@+id/siv_update"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        anzai:titles="自动更新设置"
-        anzai:desc_on="自动更新已开启"
         anzai:desc_off="自动更新已关闭"
-        />
+        anzai:desc_on="自动更新已开启"
+        anzai:titles="自动更新设置" />
+
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:padding="5dp">
+
+        <TextView
+            android:id="@+id/tv_dev"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="设备管理器设置"
+            android:textColor="@color/black"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/tv_dev_desc"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/tv_dev"
+            android:text="设备管理器已开启"
+            android:textColor="#a000"
+            android:textSize="18sp" />
+
+        <CheckBox
+            android:id="@+id/cb_dev"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true" />
+
+    </RelativeLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0.2dp"
+        android:layout_alignParentBottom="true"
+        android:background="#a000" />
+
+    <com.dda.mobilesafe.view.SettingItemView
+        android:id="@+id/siv_address"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        anzai:desc_off="归属地显示已经关闭"
+        anzai:desc_on="归属地显示已经开启"
+        anzai:titles="电话归属地显示设置" />
+
+    <TextView
+        android:id="@+id/uninstall"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="5dp"
+        android:clickable="true"
+        android:text="软件卸载"
+        android:textColor="@color/black"
+        android:textSize="20sp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0.2dp"
+        android:layout_alignParentBottom="true"
+        android:background="#a000" />
+
+    <com.dda.mobilesafe.view.SettingClickView
+        android:id="@+id/scv_address_style"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <com.dda.mobilesafe.view.SettingClickView
+        android:id="@+id/scv_address_location"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <com.dda.mobilesafe.view.SettingItemView
+        android:id="@+id/siv_callsafe"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        anzai:desc_off="黑名单更新已经关闭"
+        anzai:desc_on="黑名单更新已经开启"
+        anzai:titles="黑名单更新设置" />
 
 </LinearLayout>

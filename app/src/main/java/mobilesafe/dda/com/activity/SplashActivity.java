@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -18,16 +19,22 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.dda.mobilesafe.bean.Virus;
+import com.dda.mobilesafe.db.AntivirusDao;
+import com.dda.mobilesafe.service.AddressService;
 import com.dda.mobilesafe.utils.StreamUtils;
+import com.google.gson.Gson;
 import com.lidroid.xutils.HttpUtils;
 import com.lidroid.xutils.exception.HttpException;
 import com.lidroid.xutils.http.ResponseInfo;
 import com.lidroid.xutils.http.callback.RequestCallBack;
+import com.lidroid.xutils.http.client.HttpRequest;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -80,6 +87,7 @@ public class SplashActivity extends Activity {
             }
         }
     };
+    private AntivirusDao dao;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,19 +102,102 @@ public class SplashActivity extends Activity {
 
         mPref = getSharedPreferences("config", MODE_PRIVATE);
 
+        copyDB("address.db");//拷贝归属地查询数据库
+
+        copyDB("antivirus.db");//拷贝病毒的数据库
+
+        //创建快捷方式
+        createShortcut();
+        //更新病毒数据库
+        updataVirus();
+
+
         //判断是否需要更新
         boolean autoUpdate = mPref.getBoolean("auto_update", true);
 
         if (autoUpdate) {
             checkVersion();
-        }else{
-            mHandler.sendEmptyMessageDelayed(CODE_ENTER_HOME,2000);//延时两秒后发出消息
+        } else {
+            mHandler.sendEmptyMessageDelayed(CODE_ENTER_HOME, 2000);//延时两秒后发出消息
         }
 
         //渐变的动画效果
-        AlphaAnimation alphaAnimation = new AlphaAnimation(0.3f,1f);
+        AlphaAnimation alphaAnimation = new AlphaAnimation(0.3f, 1f);
         alphaAnimation.setDuration(2000);
         rlRoot.startAnimation(alphaAnimation);
+        startService(new Intent(this, AddressService.class));
+    }
+
+    /**
+     * 进行更新病毒数据库
+     */
+    private void updataVirus() {
+
+        dao = new AntivirusDao();
+        //联网从服务器获取到最新数据的md5的特征码
+
+        HttpUtils httpUtils = new HttpUtils();
+
+        String url = "http://10.0.2.2:8080/virus.json";
+
+        httpUtils.send(HttpRequest.HttpMethod.GET, url, new RequestCallBack<String>() {
+
+            @Override
+            public void onSuccess(ResponseInfo<String> responseInfo) {
+                try {
+
+                    //JSONObject jsonObject = new JSONObject(responseInfo.result);
+
+                    Gson gson = new Gson();
+                    //解析json
+                    Virus virus = gson.fromJson(responseInfo.result, Virus.class);
+//                    String md5 = jsonObject.getString("md5");
+//
+//                    String desc = jsonObject.getString("desc");
+
+
+                    dao.addVirus(virus.md5, virus.desc);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onFailure(HttpException e, String s) {
+
+            }
+        });
+    }
+
+    /**
+     * 快捷方式
+     */
+    private void createShortcut() {
+
+        Intent intent = new Intent();
+
+        intent.setAction("com.android.launcher.action.INSTALL_SHORTCUT");
+        //如果设置为true表示可以创建重复的快捷方式
+        intent.putExtra("duplicate", false);
+        /**
+         * 1、干什么事情
+         * 2、你叫什么名字
+         * 3、你长成什么样子
+         */
+        intent.putExtra(Intent.EXTRA_SHORTCUT_ICON, BitmapFactory.decodeResource(getResources(), R.drawable.ic_launcher1));
+        intent.putExtra(Intent.EXTRA_SHORTCUT_NAME, "安仔手机卫士");
+        //干什么事情
+        /**
+         * 这个地方不能使用显示意图
+         * 必须使用隐式意图
+         */
+        Intent shortcut_intent = new Intent();
+        shortcut_intent.setAction("aaa.bbb.ccc");
+        shortcut_intent.addCategory("android.intent.category.DEFAULT");
+
+        intent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, shortcut_intent);
+
+        sendBroadcast(intent);
     }
 
     /**
@@ -122,7 +213,7 @@ public class SplashActivity extends Activity {
             int versionCode = packageInfo.versionCode;
             String versionName = packageInfo.versionName;
 
-            System.out.println("versionName=" + versionName + ";versionCode=" + versionCode);
+//            System.out.println("versionName=" + versionName + ";versionCode=" + versionCode);
             return versionName;
         } catch (PackageManager.NameNotFoundException e) {
             //没有找到包名的时候报此异常
@@ -177,8 +268,6 @@ public class SplashActivity extends Activity {
                     if (responseCode == 200) {
                         InputStream inputStream = conn.getInputStream();
                         String result = StreamUtils.readFromStream(inputStream);
-
-//                        System.out.println("网络返回:" + result);
 
                         //解析json
                         JSONObject jo = new JSONObject(result);
@@ -318,6 +407,40 @@ public class SplashActivity extends Activity {
         Intent intent = new Intent(this, HomeActivity.class);
         startActivity(intent);
         finish();
+    }
+
+    /**
+     * 拷贝数据库
+     */
+    private void copyDB(String dbName) {
+        File destFile = new File(getFilesDir(), dbName);//要拷贝的目标地址
+
+        if (destFile.exists()) {
+            return;
+        }
+        FileOutputStream out = null;
+        InputStream in = null;
+
+        try {
+            in = getAssets().open(dbName);
+            out = new FileOutputStream(destFile);
+
+            int len = 0;
+            byte[] buffer = new byte[1024];
+
+            while ((len = in.read(buffer)) != -1) {
+                out.write(buffer, 0, len);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                in.close();
+                out.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 }
 

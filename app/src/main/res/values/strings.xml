@@ -7,4 +7,9 @@
     <string name="version">版本号:1.0</string>
     <string name="title_activity_home">HomeActivity</string>
     <string name="title_activity_setting">SettingActivity</string>
+    <string name="sample_device_admin_description">有了超级设备管理器,可以一键锁屏,清除数据等等</string>
+    <string name="sample_device_admin">超级设备管理器</string>
+        <string name="title_activity_call_safe">CallSafeActivity</string>
+        <string name="title_activity_task_manager_setting">TaskManagerSettingActivity</string>
+        <string name="title_activity_antivirus">AntivirusActivity</string>
 </resources>
